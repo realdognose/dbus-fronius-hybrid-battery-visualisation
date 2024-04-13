@@ -76,7 +76,7 @@ class DbusFroniusHybridService:
  
     # Create the mandatory objects
     self._dbusservice2.add_path('/DeviceInstance', deviceinstance2)
-    self._dbusservice2.add_path('/ProductId', 0xb040)  #Using the id for a Fischer Panda Genset
+    self._dbusservice2.add_path('/ProductId', 57344) 
     self._dbusservice2.add_path('/ProductName', productname2)
     self._dbusservice2.add_path('/CustomName', "Fronius Hybrid attached Battery")    
     self._dbusservice2.add_path('/Latency', None)    
@@ -289,6 +289,7 @@ def main():
           '/ServiceInterval': {'initial': 0, 'textformat': _p},
           '/ServiceCounter': {'initial': 0, 'textformat': _p},
           '/ServiceCounterReset': {'initial': 0, 'textformat': _p},
+          '/NrOfPhases': {'initial': 3, 'textformat': _p},
         })
      
       logging.info('Connected to dbus, and switching over to gobject.MainLoop() (= event based)')
