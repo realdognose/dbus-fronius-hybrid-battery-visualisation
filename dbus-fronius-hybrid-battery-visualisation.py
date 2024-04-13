@@ -31,13 +31,13 @@ class DbusFroniusHybridService:
     deviceinstance = config['ONPREMISE']['DeviceIdForInverter']
     deviceinstance2 = config['ONPREMISE']['DeviceIdForGenSet']
 
+    logging.debug("%s /DeviceInstance = %d" % (servicename, deviceinstance))
+    logging.debug("%s /DeviceInstance = %d" % (servicename2, deviceinstance2))
+
     self._dbusservice = VeDbusService("{}.http_{:02d}".format(servicename, deviceinstance))
     self._dbusservice2 = VeDbusService("{}.http_{:02d}".format(servicename2, deviceinstance2))
     self._paths = paths
     self._paths2 = paths2
- 
-    logging.debug("%s /DeviceInstance = %d" % (servicename, deviceinstance))
-    logging.debug("%s /DeviceInstance = %d" % (servicename2, deviceinstance2))
  
     # Create the management objects, as specified in the ccgx dbus-api document
     self._dbusservice.add_path('/Mgmt/ProcessName', __file__)
@@ -72,6 +72,7 @@ class DbusFroniusHybridService:
     self._dbusservice2.add_path('/HardwareVersion', 0)
     self._dbusservice2.add_path('/Connected', 1)
     self._dbusservice2.add_path('/Serial', self._getFronisSerial())
+    self._dbusservice2.add_path('/UpdateIndex', 0)
 
     # add path values to dbus
     for path, settings in self._paths.items():
@@ -97,7 +98,7 @@ class DbusFroniusHybridService:
   def _getConfig(self):
     config = configparser.ConfigParser()
     config.read("%s/config.ini" % (os.path.dirname(os.path.realpath(__file__))))
-    return config;
+    return config
   
   def _getSignOfLifeInterval(self):
     config = self._getConfig()
