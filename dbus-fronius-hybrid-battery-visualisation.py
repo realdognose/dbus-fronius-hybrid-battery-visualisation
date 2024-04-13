@@ -22,17 +22,22 @@ from vedbus import VeDbusService
 
 
 class DbusFroniusHybridService:
-  def __init__(self, servicename, paths, productname='Fronius Hybrid', connection='Fronius meter JSON API'):
+  def __init__(self, servicename, servicename2, paths, paths2, 
+               productname='Fronius Hybrid', connection='Fronius meter JSON API', productname2='Fronius attached Battery', connection2='Fronius meter JSON API'):
     
     config = configparser.ConfigParser()
     config.read("%s/config.ini" % (os.path.dirname(os.path.realpath(__file__))))
 
-    deviceinstance = int(config['ONPREMISE']['DeviceIdForInverter'])
-    
+    deviceinstance = config['ONPREMISE']['DeviceIdForInverter']
+    deviceinstance2 = config['ONPREMISE']['DeviceIdForGenSet']
+
     logging.debug("%s /DeviceInstance = %d" % (servicename, deviceinstance))
+    logging.debug("%s /DeviceInstance = %d" % (servicename2, deviceinstance2))
 
     self._dbusservice = VeDbusService("{}.http_{:02d}".format(servicename, deviceinstance))
+    self._dbusservice2 = VeDbusService("{}.http_{:02d}".format(servicename2, deviceinstance2))
     self._paths = paths
+    self._paths2 = paths2
  
     # Create the management objects, as specified in the ccgx dbus-api document
     self._dbusservice.add_path('/Mgmt/ProcessName', __file__)
@@ -52,65 +57,32 @@ class DbusFroniusHybridService:
     self._dbusservice.add_path('/Serial', self._getFronisSerial())
     self._dbusservice.add_path('/UpdateIndex', 0)
  
-    # add path values to dbus
-    for path, settings in self._paths.items():
-      self._dbusservice.add_path(
-        path, settings['initial'], gettextcallback=settings['textformat'], writeable=True, onchangecallback=self._handlechangedvalue)
- 
-     # add _update function 'timer'
-    gobject.timeout_add(int(config['ONPREMISE']['intervalMs']), self._update) # pause 250ms before the next request
- 
-  def _getFronisSerial(self):
-    return "0815"
-  
-  def _getConfig(self):
-    config = configparser.ConfigParser()
-    config.read("%s/config.ini" % (os.path.dirname(os.path.realpath(__file__))))
-    return config
-  
-  def _update(self):   
-    # return true, otherwise add_timeout will be removed from GObject - see docs http://library.isr.ist.utl.pt/docs/pygtk2reference/gobject-functions.html#function-gobject--timeout-add
-    return True
- 
-  def _handlechangedvalue(self, path, value):
-    logging.critical("someone else updated %s to %s" % (path, value))
-    return True # accept the change
-  
-class DbusFroniusHybridBatteryService:
-  def __init__(self, servicename2, paths2, invService ,productname2='Fronius attached Battery', connection2='Fronius meter JSON API'):
-    
-    config = configparser.ConfigParser()
-    config.read("%s/config.ini" % (os.path.dirname(os.path.realpath(__file__))))
-
-    deviceinstance2 = int(config['ONPREMISE']['DeviceIdForGenSet'])
-    
-    logging.debug("%s /DeviceInstance = %d" % (servicename2, deviceinstance2))
-    self._invService = invService
-    self._dbusservice = VeDbusService("{}.http_{:02d}".format(servicename2, deviceinstance2))
-    self._paths = paths2
- 
     # Create the management objects, as specified in the ccgx dbus-api document
-    self._dbusservice.add_path('/Mgmt/ProcessName', __file__)
-    self._dbusservice.add_path('/Mgmt/ProcessVersion', 'Unkown version, and running on Python ' + platform.python_version())
-    self._dbusservice.add_path('/Mgmt/Connection', connection2)
+    self._dbusservice2.add_path('/Mgmt/ProcessName', __file__)
+    self._dbusservice2.add_path('/Mgmt/ProcessVersion', 'Unkown version, and running on Python ' + platform.python_version())
+    self._dbusservice2.add_path('/Mgmt/Connection', connection2)
  
     # Create the mandatory objects
-    self._dbusservice.add_path('/DeviceInstance', deviceinstance2)
-    self._dbusservice.add_path('/ProductId', 0xb040)  #Using the id for a Fischer Panda Genset
-    self._dbusservice.add_path('/ProductName', productname2)
-    self._dbusservice.add_path('/CustomName', "Fronius Hybrid attached Battery")    
-    self._dbusservice.add_path('/Latency', None)    
-    self._dbusservice.add_path('/FirmwareVersion', 0.1)
-    self._dbusservice.add_path('/HardwareVersion', 0)
-    self._dbusservice.add_path('/Connected', 1)
-    self._dbusservice.add_path('/Serial', self._getFronisSerial())
-    self._dbusservice.add_path('/UpdateIndex', 0)
+    self._dbusservice2.add_path('/DeviceInstance', deviceinstance2)
+    self._dbusservice2.add_path('/ProductId', 0xb040)  #Using the id for a Fischer Panda Genset
+    self._dbusservice2.add_path('/ProductName', productname2)
+    self._dbusservice2.add_path('/CustomName', "Fronius Hybrid attached Battery")    
+    self._dbusservice2.add_path('/Latency', None)    
+    self._dbusservice2.add_path('/FirmwareVersion', 0.1)
+    self._dbusservice2.add_path('/HardwareVersion', 0)
+    self._dbusservice2.add_path('/Connected', 1)
+    self._dbusservice2.add_path('/Serial', self._getFronisSerial())
+    self._dbusservice2.add_path('/UpdateIndex', 0)
 
     # add path values to dbus
     for path, settings in self._paths.items():
       self._dbusservice.add_path(
         path, settings['initial'], gettextcallback=settings['textformat'], writeable=True, onchangecallback=self._handlechangedvalue)
  
+    for path, settings in self._paths2.items():
+      self._dbusservice2.add_path(
+        path, settings['initial'], gettextcallback=settings['textformat'], writeable=True, onchangecallback=self._handlechangedvalue)
+
     # last update
     self._lastUpdate = 0
  
@@ -167,6 +139,7 @@ class DbusFroniusHybridBatteryService:
   def _signOfLife(self):
     logging.info("--- Start: sign of life ---")
     logging.info("Last _update() call: %s" % (self._lastUpdate))
+    logging.info("Last '/Ac/Power': %s" % (self._dbusservice['/Ac/Power']))
     logging.info("--- End: sign of life ---")
     return True
  
@@ -183,18 +156,18 @@ class DbusFroniusHybridBatteryService:
        #Act as regular inverter on DBUS for Solar-Production ob dbusservice.
        #Act as AC-Generator on dbusservice2
        if (p_bat > 0):
-         self._invService._dbusservice['/Ac/Power'] = 0 #no PV Power.
-         self._invService._dbusservice['/Ac/L1/Power'] = 0 #no PV Power.
-         self._invService._dbusservice['/Ac/L2/Power'] = 0 #no PV Power.
-         self._invService._dbusservice['/Ac/L3/Power'] = 0 #no PV Power.
-         self._dbusservice['/Ac/Power'] =  (p_load * -1) #Pretend our generator is running. Use P_Load *-1 as this equals the AC load.
-         self._dbusservice['/Ac/L1/Power'] = (p_load * -1)/3 #Pretend our generator is running.
-         self._dbusservice['/Ac/L2/Power'] = (p_load * -1)/3 #Pretend our generator is running.
-         self._dbusservice['/Ac/L3/Power'] = (p_load * -1)/3 #Pretend our generator is running.
+         self._dbusservice['/Ac/Power'] = 0 #no PV Power.
+         self._dbusservice['/Ac/L1/Power'] = 0 #no PV Power.
+         self._dbusservice['/Ac/L2/Power'] = 0 #no PV Power.
+         self._dbusservice['/Ac/L3/Power'] = 0 #no PV Power.
+         self._dbusservice2['/Ac/Power'] =  (p_load * -1) #Pretend our generator is running. Use P_Load *-1 as this equals the AC load.
+         self._dbusservice2['/Ac/L1/Power'] = (p_load * -1)/3 #Pretend our generator is running.
+         self._dbusservice2['/Ac/L2/Power'] = (p_load * -1)/3 #Pretend our generator is running.
+         self._dbusservice2['/Ac/L3/Power'] = (p_load * -1)/3 #Pretend our generator is running.
        
        # increment UpdateIndex - to show that new data is available
-       index = self._invService._dbusservice['/UpdateIndex'] + 1  # increment index
-       index2 = self._dbusservice['/UpdateIndex'] + 1  # increment index
+       index = self._dbusservice['/UpdateIndex'] + 1  # increment index
+       index2 = self._dbusservice2['/UpdateIndex'] + 1  # increment index
        
        if index > 255:   # maximum value of the index
          index = 0       # overflow from 255 to 0
@@ -202,8 +175,8 @@ class DbusFroniusHybridBatteryService:
        if index2 > 255:   # maximum value of the index
          index2 = 0       # overflow from 255 to 0
        
-       self._invService._dbusservice['/UpdateIndex'] = index
-       self._dbusservice['/UpdateIndex'] = index2
+       self._dbusservice['/UpdateIndex'] = index
+       self._dbusservice2['/UpdateIndex'] = index2
 
        #update lastupdate vars
        self._lastUpdate = time.time()              
@@ -246,6 +219,7 @@ def main():
       #start our services
       pvac_output = DbusFroniusHybridService(
         servicename=serviceNameInverter,
+        servicename2=serviceNameGenerator,
         paths={
           '/Ac/Energy/Forward': {'initial': None, 'textformat': _kwh}, # energy produced by pv inverter
           '/Ac/Power': {'initial': 0, 'textformat': _w},
@@ -261,10 +235,7 @@ def main():
           '/Ac/L1/Energy/Forward': {'initial': None, 'textformat': _kwh},
           '/Ac/L2/Energy/Forward': {'initial': None, 'textformat': _kwh},
           '/Ac/L3/Energy/Forward': {'initial': None, 'textformat': _kwh}
-        })
-      
-      gen_output = DbusFroniusHybridBatteryService(
-        servicename2=serviceNameGenerator,
+        },
         paths2={
           '/Ac/Power': {'initial': 0, 'textformat': _w},              #<- W    - total of all phases, real power
 
@@ -279,7 +250,7 @@ def main():
           '/Ac/L3/Current':{'initial': 0, 'textformat': _a},         #<- A AC
           '/Ac/L3/Power': {'initial': 0, 'textformat': _w},           #<- W, real power
           '/Ac/L3/Voltage': {'initial': 0, 'textformat': _v}         #<- V AC
-        }, invService=pvac_output)
+        })
      
       logging.info('Connected to dbus, and switching over to gobject.MainLoop() (= event based)')
       mainloop = gobject.MainLoop()
