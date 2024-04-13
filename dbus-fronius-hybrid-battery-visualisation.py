@@ -264,7 +264,7 @@ def main():
           '/Ac/L3/Current':{'initial': 0, 'textformat': _a},         #<- A AC
           '/Ac/L3/Power': {'initial': 0, 'textformat': _w},           #<- W, real power
           '/Ac/L3/Voltage': {'initial': 0, 'textformat': _v},         #<- V AC
-          '/Ac/ActiveIn/Connected':{'initial': 1}
+          '/Ac/ActiveIn/Connected':{'initial': 1},
           '/RunningByConditionCode': {'initial': 0},
           'Error': {'initial': 0}
         })
