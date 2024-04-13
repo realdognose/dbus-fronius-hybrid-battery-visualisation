@@ -226,6 +226,7 @@ def main():
       _a = lambda p, v: (str(round(v, 1)) + ' A')
       _w = lambda p, v: (str(round(v, 1)) + ' W')
       _v = lambda p, v: (str(round(v, 1)) + ' V')   
+      _p = lambda p, v: (str(v))
 
       serviceNameInverter = "com.victronenergy.pvinverter"
       serviceNameGenerator = "com.victronenergy.genset"
@@ -264,9 +265,9 @@ def main():
           '/Ac/L3/Current':{'initial': 0, 'textformat': _a},         #<- A AC
           '/Ac/L3/Power': {'initial': 0, 'textformat': _w},           #<- W, real power
           '/Ac/L3/Voltage': {'initial': 0, 'textformat': _v},         #<- V AC
-          '/Ac/ActiveIn/Connected':{'initial': 1},
-          '/RunningByConditionCode': {'initial': 0},
-          'Error': {'initial': 0}
+          '/Ac/ActiveIn/Connected': {'initial': 1, 'textformat': _p},
+          '/RunningByConditionCode': {'initial': 0, 'textformat': _p},
+          '/Error': {'initial': 0, 'textformat': _p}
         })
      
       logging.info('Connected to dbus, and switching over to gobject.MainLoop() (= event based)')
