@@ -95,31 +95,6 @@ class DbusFroniusHybridService:
       self._dbusservice2.add_path(
         path, settings['initial'], gettextcallback=settings['textformat'], writeable=True, onchangecallback=self._handlechangedvalue)
 
-    # We need to set the values after creating the paths to trigger the 'onValueChanged' event for the gui
-		# otherwise the gui will report the paths as invalid if we remove and recreate the paths without
-		# restarting the dbusservice.
-    self._dbusservice2['/State'] = 0
-    self._dbusservice2['/RunningByConditionCode'] = 0
-    self._dbusservice2['/Error'] = 0
-    self._dbusservice2['/RunningByCondition'] = ''
-    self._dbusservice2['/Runtime'] = 0
-    self._dbusservice2['/TodayRuntime'] = 0
-    self._dbusservice2['/TestRunIntervalRuntime'] = 0
-    self._dbusservice2['/NextTestRun'] = None
-    self._dbusservice2['/SkipTestRun'] = None
-    self._dbusservice2['/ProductName'] = "Generator start/stop"
-    self._dbusservice2['/ManualStart'] = 0
-    self._dbusservice2['/ManualStartTimer'] = 0
-    self._dbusservice2['/QuietHours'] = 0
-    self._dbusservice2['/Alarms/NoGeneratorAtAcIn'] = 0
-    self._dbusservice2['/Alarms/ServiceIntervalExceeded'] = 0
-    self._dbusservice2['/Alarms/AutoStartDisabled'] = 0
-    self._dbusservice2['/AutoStartEnabled'] = 0
-    self._dbusservice2['/AccumulatedRuntime'] = 0
-    self._dbusservice2['/ServiceInterval'] = 0
-    self._dbusservice2['/ServiceCounter'] = None
-    self._dbusservice2['/ServiceCounterReset'] = 0
-
     # last update
     self._lastUpdate = 0
  
@@ -292,11 +267,28 @@ def main():
           '/Ac/L3/Power': {'initial': 0, 'textformat': _w},           #<- W, real power
           '/Ac/L3/Voltage': {'initial': 0, 'textformat': _v},         #<- V AC
           '/Ac/ActiveIn/Connected': {'initial': 1, 'textformat': _p},
-          '/RunningByConditionCode': {'initial': 0, 'textformat': _p},
+          '/RunningByConditionCode': {'initial': 4, 'textformat': _p},
           '/Error': {'initial': 0, 'textformat': _p},
           '/State': {'initial': 0, 'textformat': _p},
           '/Ac/In/0/Connected':{'initial': 1, 'textformat': _p},
           '/Ac/In/0/ServiceTyp':{'initial': 'genset', 'textformat': _p}
+          '/RunningByCondition': {'initial': 'soc', 'textformat': _p},
+          '/Runtime': {'initial': 0, 'textformat': _p},
+          '/TodayRuntime': {'initial': 0, 'textformat': _p},
+          '/TestRunIntervalRuntime': {'initial': 0, 'textformat': _p},
+          '/NextTestRun': {'initial': None, 'textformat': _p},
+          '/SkipTestRun': {'initial': None, 'textformat': _p},
+          '/ManualStart': {'initial': 0, 'textformat': _p},
+          '/ManualStartTimer': {'initial': 0, 'textformat': _p},
+          '/QuietHours': {'initial': 0, 'textformat': _p},
+          '/Alarms/NoGeneratorAtAcIn': {'initial': 0, 'textformat': _p},
+          '/Alarms/ServiceIntervalExceeded': {'initial': 0, 'textformat': _p},
+          '/Alarms/AutoStartDisabled': {'initial': 0, 'textformat': _p},
+          '/AutoStartEnabled': {'initial': 0, 'textformat': _p},
+          '/AccumulatedRuntime': {'initial': 0, 'textformat': _p},
+          '/ServiceInterval': {'initial': 0, 'textformat': _p},
+          '/ServiceCounter': {'initial': 0, 'textformat': _p},
+          '/ServiceCounterReset': {'initial': 0, 'textformat': _p},
         })
      
       logging.info('Connected to dbus, and switching over to gobject.MainLoop() (= event based)')
