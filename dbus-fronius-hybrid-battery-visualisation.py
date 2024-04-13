@@ -95,6 +95,31 @@ class DbusFroniusHybridService:
       self._dbusservice2.add_path(
         path, settings['initial'], gettextcallback=settings['textformat'], writeable=True, onchangecallback=self._handlechangedvalue)
 
+    # We need to set the values after creating the paths to trigger the 'onValueChanged' event for the gui
+		# otherwise the gui will report the paths as invalid if we remove and recreate the paths without
+		# restarting the dbusservice.
+    self._dbusservice2['/State'] = 0
+    self._dbusservice2['/RunningByConditionCode'] = 0
+    self._dbusservice2['/Error'] = 0
+    self._dbusservice2['/RunningByCondition'] = ''
+    self._dbusservice2['/Runtime'] = 0
+    self._dbusservice2['/TodayRuntime'] = 0
+    self._dbusservice2['/TestRunIntervalRuntime'] = 0
+    self._dbusservice2['/NextTestRun'] = None
+    self._dbusservice2['/SkipTestRun'] = None
+    self._dbusservice2['/ProductName'] = "Generator start/stop"
+    self._dbusservice2['/ManualStart'] = 0
+    self._dbusservice2['/ManualStartTimer'] = 0
+    self._dbusservice2['/QuietHours'] = 0
+    self._dbusservice2['/Alarms/NoGeneratorAtAcIn'] = 0
+    self._dbusservice2['/Alarms/ServiceIntervalExceeded'] = 0
+    self._dbusservice2['/Alarms/AutoStartDisabled'] = 0
+    self._dbusservice2['/AutoStartEnabled'] = 0
+    self._dbusservice2['/AccumulatedRuntime'] = 0
+    self._dbusservice2['/ServiceInterval'] = 0
+    self._dbusservice2['/ServiceCounter'] = None
+    self._dbusservice2['/ServiceCounterReset'] = 0
+
     # last update
     self._lastUpdate = 0
  
