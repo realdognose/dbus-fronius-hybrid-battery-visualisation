@@ -65,7 +65,7 @@ class DbusFroniusHybridService:
     self._dbusservice.add_path('/FirmwareVersion', 0.1)
     self._dbusservice.add_path('/HardwareVersion', 0)
     self._dbusservice.add_path('/Connected', 1)
-    self._dbusservice.add_path('/Position', 1) # normaly only needed for pvinverter
+    self._dbusservice.add_path('/Position', int(config['ONPREMISE']['InverterPosition'])) 
     self._dbusservice.add_path('/Serial', self._getFronisSerial())
     self._dbusservice.add_path('/UpdateIndex', 0)
  
