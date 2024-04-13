@@ -271,7 +271,7 @@ def main():
           '/Error': {'initial': 0, 'textformat': _p},
           '/State': {'initial': 0, 'textformat': _p},
           '/Ac/In/0/Connected':{'initial': 1, 'textformat': _p},
-          '/Ac/In/0/ServiceTyp':{'initial': 'genset', 'textformat': _p}
+          '/Ac/In/0/ServiceTyp':{'initial': 'genset', 'textformat': _p},
           '/RunningByCondition': {'initial': 'soc', 'textformat': _p},
           '/Runtime': {'initial': 0, 'textformat': _p},
           '/TodayRuntime': {'initial': 0, 'textformat': _p},
