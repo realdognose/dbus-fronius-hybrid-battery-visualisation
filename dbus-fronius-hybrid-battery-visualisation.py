@@ -172,6 +172,8 @@ class DbusFroniusHybridService:
          self._dbusservice['/Ac/L1/Power'] = 0 #no PV Power.
          self._dbusservice['/Ac/L2/Power'] = 0 #no PV Power.
          self._dbusservice['/Ac/L3/Power'] = 0 #no PV Power.
+
+         self._dbusservice2['/RunningByConditionCode'] = 1
          self._dbusservice2['/Ac/Power'] =  (p_load * -1) #Pretend our generator is running. Use P_Load *-1 as this equals the AC load.
          self._dbusservice2['/Ac/L1/Power'] = (p_load * -1)/3 #Pretend our generator is running.
          self._dbusservice2['/Ac/L2/Power'] = (p_load * -1)/3 #Pretend our generator is running.
@@ -261,7 +263,10 @@ def main():
 
           '/Ac/L3/Current':{'initial': 0, 'textformat': _a},         #<- A AC
           '/Ac/L3/Power': {'initial': 0, 'textformat': _w},           #<- W, real power
-          '/Ac/L3/Voltage': {'initial': 0, 'textformat': _v}         #<- V AC
+          '/Ac/L3/Voltage': {'initial': 0, 'textformat': _v},         #<- V AC
+          '/Ac/ActiveIn/Connected':{'initial': 1}
+          '/RunningByConditionCode': {'initial': 0},
+          'Error': {'initial': 0}
         })
      
       logging.info('Connected to dbus, and switching over to gobject.MainLoop() (= event based)')
