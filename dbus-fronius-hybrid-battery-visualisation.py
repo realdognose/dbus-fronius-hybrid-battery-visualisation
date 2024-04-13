@@ -279,7 +279,7 @@ def main():
           '/Ac/L3/Current':{'initial': 0, 'textformat': _a},         #<- A AC
           '/Ac/L3/Power': {'initial': 0, 'textformat': _w},           #<- W, real power
           '/Ac/L3/Voltage': {'initial': 0, 'textformat': _v}         #<- V AC
-        }, pinvService=pvac_output)
+        }, invService=pvac_output)
      
       logging.info('Connected to dbus, and switching over to gobject.MainLoop() (= event based)')
       mainloop = gobject.MainLoop()
