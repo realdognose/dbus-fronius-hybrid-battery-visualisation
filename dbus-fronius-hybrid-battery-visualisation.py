@@ -28,8 +28,8 @@ class DbusFroniusHybridService:
     config = configparser.ConfigParser()
     config.read("%s/config.ini" % (os.path.dirname(os.path.realpath(__file__))))
 
-    deviceinstance = config['ONPREMISE']['DeviceIdForInverter']
-    deviceinstance2 = config['ONPREMISE']['DeviceIdForGenSet']
+    deviceinstance = int(config['ONPREMISE']['DeviceIdForInverter'])
+    deviceinstance2 = int(config['ONPREMISE']['DeviceIdForGenSet'])
 
     logging.debug("%s /DeviceInstance = %d" % (servicename, deviceinstance))
     logging.debug("%s /DeviceInstance = %d" % (servicename2, deviceinstance2))
