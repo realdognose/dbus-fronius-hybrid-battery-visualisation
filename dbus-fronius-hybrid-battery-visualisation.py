@@ -15,11 +15,23 @@ import sys
 import time
 import requests # for http GET
 import configparser # for config/ini file
+from dbus.mainloop.glib import DBusGMainLoop
+import dbus
  
 # our own packages from victron
 sys.path.insert(1, os.path.join(os.path.dirname(__file__), '/opt/victronenergy/dbus-systemcalc-py/ext/velib_python'))
 from vedbus import VeDbusService
 
+class SystemBus(dbus.bus.BusConnection):
+    def __new__(cls):
+        return dbus.bus.BusConnection.__new__(cls, dbus.bus.BusConnection.TYPE_SYSTEM)
+
+class SessionBus(dbus.bus.BusConnection):
+    def __new__(cls):
+        return dbus.bus.BusConnection.__new__(cls, dbus.bus.BusConnection.TYPE_SESSION)
+    
+def dbusconnection():
+    return SessionBus() if 'DBUS_SESSION_BUS_ADDRESS' in os.environ else SystemBus()
 
 class DbusFroniusHybridService:
   def __init__(self, servicename, servicename2, paths, paths2, 
@@ -28,14 +40,14 @@ class DbusFroniusHybridService:
     config = configparser.ConfigParser()
     config.read("%s/config.ini" % (os.path.dirname(os.path.realpath(__file__))))
 
-    deviceinstance = config['ONPREMISE']['DeviceIdForInverter']
-    deviceinstance2 = config['ONPREMISE']['DeviceIdForGenSet']
+    deviceinstance = int(config['ONPREMISE']['DeviceIdForInverter'])
+    deviceinstance2 = int(config['ONPREMISE']['DeviceIdForGenSet'])
 
     logging.debug("%s /DeviceInstance = %d" % (servicename, deviceinstance))
     logging.debug("%s /DeviceInstance = %d" % (servicename2, deviceinstance2))
 
-    self._dbusservice = VeDbusService("{}.http_{:02d}".format(servicename, deviceinstance))
-    self._dbusservice2 = VeDbusService("{}.http_{:02d}".format(servicename2, deviceinstance2))
+    self._dbusservice = VeDbusService("{}.http_{:02d}".format(servicename, deviceinstance), bus=dbusconnection())
+    self._dbusservice2 = VeDbusService("{}.http_{:02d}".format(servicename2, deviceinstance2), bus=dbusconnection())
     self._paths = paths
     self._paths2 = paths2
  
