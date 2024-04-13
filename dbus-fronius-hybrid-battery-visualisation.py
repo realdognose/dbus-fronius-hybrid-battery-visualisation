@@ -268,8 +268,8 @@ def main():
           '/Ac/ActiveIn/Connected': {'initial': 1, 'textformat': _p},
           '/RunningByConditionCode': {'initial': 0, 'textformat': _p},
           '/Error': {'initial': 0, 'textformat': _p},
-          'Ac/In/0/Connected':{'initial': 1, 'textformat': _p},
-          'Ac/In/0/ServiceTyp':{'initial': 'genset', 'textformat': _p}
+          '/Ac/In/0/Connected':{'initial': 1, 'textformat': _p},
+          '/Ac/In/0/ServiceTyp':{'initial': 'genset', 'textformat': _p}
         })
      
       logging.info('Connected to dbus, and switching over to gobject.MainLoop() (= event based)')
