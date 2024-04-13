@@ -22,11 +22,15 @@ from vedbus import VeDbusService
 
 
 class DbusFroniusHybridService:
-  def __init__(self, servicename, servicename2, deviceinstance, deviceinstance2, paths, paths2, 
+  def __init__(self, servicename, servicename2, paths, paths2, 
                productname='Fronius Hybrid', connection='Fronius meter JSON API', productname2='Fronius attached Battery', connection2='Fronius meter JSON API'):
     
     config = configparser.ConfigParser()
     config.read("%s/config.ini" % (os.path.dirname(os.path.realpath(__file__))))
+
+    deviceinstance = config['ONPREMISE']['DeviceIdForInverter']
+    deviceinstance2 = config['ONPREMISE']['DeviceIdForGenSet']
+
     self._dbusservice = VeDbusService("{}.http_{:02d}".format(servicename, deviceinstance))
     self._dbusservice2 = VeDbusService("{}.http_{:02d}".format(servicename2, deviceinstance2))
     self._paths = paths
@@ -191,7 +195,7 @@ def main():
   #configure logging
   logging.basicConfig(      format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
                             datefmt='%Y-%m-%d %H:%M:%S',
-                            level=logging.ERROR,
+                            level=logging.DEBUG,
                             handlers=[
                                 logging.FileHandler("%s/current.log" % (os.path.dirname(os.path.realpath(__file__)))),
                                 logging.StreamHandler()
@@ -214,9 +218,7 @@ def main():
       #start our services
       pvac_output = DbusFroniusHybridService(
         servicename=serviceNameInverter,
-        servicename2=serviceNameGenerator
-        deviceinstance=40,
-        deviceinstance2=41,
+        servicename2=serviceNameGenerator,
         paths={
           '/Ac/Energy/Forward': {'initial': None, 'textformat': _kwh}, # energy produced by pv inverter
           '/Ac/Power': {'initial': 0, 'textformat': _w},
@@ -231,22 +233,22 @@ def main():
           '/Ac/L3/Power': {'initial': 0, 'textformat': _w},
           '/Ac/L1/Energy/Forward': {'initial': None, 'textformat': _kwh},
           '/Ac/L2/Energy/Forward': {'initial': None, 'textformat': _kwh},
-          '/Ac/L3/Energy/Forward': {'initial': None, 'textformat': _kwh},
+          '/Ac/L3/Energy/Forward': {'initial': None, 'textformat': _kwh}
         },
         paths2={
           '/Ac/Power': {'initial': 0, 'textformat': _w},              #<- W    - total of all phases, real power
 
-          '/Ac/L1/Current':{'initial': 0, 'textformat': _a}         #<- A AC
+          '/Ac/L1/Current':{'initial': 0, 'textformat': _a},         #<- A AC
           '/Ac/L1/Power': {'initial': 0, 'textformat': _w},           #<- W, real power
           '/Ac/L1/Voltage': {'initial': 0, 'textformat': _v},         #<- V AC
           
-          '/Ac/L2/Current':{'initial': 0, 'textformat': _a}         #<- A AC
+          '/Ac/L2/Current':{'initial': 0, 'textformat': _a},         #<- A AC
           '/Ac/L2/Power': {'initial': 0, 'textformat': _w},           #<- W, real power
           '/Ac/L2/Voltage': {'initial': 0, 'textformat': _v},         #<- V AC
 
-          '/Ac/L3/Current':{'initial': 0, 'textformat': _a}         #<- A AC
+          '/Ac/L3/Current':{'initial': 0, 'textformat': _a},         #<- A AC
           '/Ac/L3/Power': {'initial': 0, 'textformat': _w},           #<- W, real power
-          '/Ac/L3/Voltage': {'initial': 0, 'textformat': _v},         #<- V AC
+          '/Ac/L3/Voltage': {'initial': 0, 'textformat': _v}         #<- V AC
         })
      
       logging.info('Connected to dbus, and switching over to gobject.MainLoop() (= event based)')
