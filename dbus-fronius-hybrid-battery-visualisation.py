@@ -173,6 +173,7 @@ class DbusFroniusHybridService:
          self._dbusservice['/Ac/L2/Power'] = 0 #no PV Power.
          self._dbusservice['/Ac/L3/Power'] = 0 #no PV Power.
 
+         self._dbusservice2['/State'] = 1
          self._dbusservice2['/RunningByConditionCode'] = 1
          self._dbusservice2['/Ac/Power'] =  (p_load * -1) #Pretend our generator is running. Use P_Load *-1 as this equals the AC load.
          self._dbusservice2['/Ac/L1/Power'] = (p_load * -1)/3 #Pretend our generator is running.
@@ -268,6 +269,7 @@ def main():
           '/Ac/ActiveIn/Connected': {'initial': 1, 'textformat': _p},
           '/RunningByConditionCode': {'initial': 0, 'textformat': _p},
           '/Error': {'initial': 0, 'textformat': _p},
+          '/State': {'initial': 0, 'textformat': _p},
           '/Ac/In/0/Connected':{'initial': 1, 'textformat': _p},
           '/Ac/In/0/ServiceTyp':{'initial': 'genset', 'textformat': _p}
         })
