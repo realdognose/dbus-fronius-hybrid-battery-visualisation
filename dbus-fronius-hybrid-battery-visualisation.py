@@ -192,12 +192,12 @@ class DbusFroniusHybridService:
          self._dbusservice['/Ac/L2/Power'] = (p_pv - p_bat)/3
          self._dbusservice['/Ac/L3/Power'] = (p_pv - p_bat)/3
 
-         self._dbusservice2['/State'] = 0
-         self._dbusservice2['/RunningByConditionCode'] = 0
-         self._dbusservice2['/Ac/Power'] = 0
-         self._dbusservice2['/Ac/L1/Power'] = 0
-         self._dbusservice2['/Ac/L2/Power'] = 0
-         self._dbusservice2['/Ac/L3/Power'] = 0
+         self._dbusservice2['/State'] = 1
+         self._dbusservice2['/RunningByConditionCode'] = 1
+         self._dbusservice2['/Ac/Power'] = p_bat
+         self._dbusservice2['/Ac/L1/Power'] = p_bat/3
+         self._dbusservice2['/Ac/L2/Power'] = p_bat/3
+         self._dbusservice2['/Ac/L3/Power'] = p_bat/3
 
        # increment UpdateIndex - to show that new data is available
        index = self._dbusservice['/UpdateIndex'] + 1  # increment index
