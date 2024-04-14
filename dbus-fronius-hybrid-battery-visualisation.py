@@ -282,7 +282,7 @@ def main():
   #configure logging
   logging.basicConfig(      format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
                             datefmt='%Y-%m-%d %H:%M:%S',
-                            level=logging.DEBUG,
+                            level=logging.WARN,
                             handlers=[
                                 logging.FileHandler("%s/current.log" % (os.path.dirname(os.path.realpath(__file__)))),
                                 logging.StreamHandler()
