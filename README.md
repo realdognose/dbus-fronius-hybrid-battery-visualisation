@@ -56,7 +56,8 @@ svc -u /service/dbus-fronius-hybrid-battery-visualisation
 cat /data/dbus-fronius-hybrid-battery-visualisation/current.log
 ```
 ### Change config.ini
-Within the project there is a file `/data/dbus-fronius-hybrid-battery-visualisation/config.ini` - just change the values - most important is the host and hostPlug in section "ONPREMISE". More details below:
+Within the project there is a file `/data/dbus-fronius-hybrid-battery-visualisation/config.ini` - just change the values - most important is the host and HybridID in section "ONPREMISE". More details bellow
+and comments in the config file:
 
 Afther change the config file execute restart.sh to reload new settings 
 
