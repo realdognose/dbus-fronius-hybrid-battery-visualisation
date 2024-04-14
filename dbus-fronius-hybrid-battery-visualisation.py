@@ -187,10 +187,10 @@ class DbusFroniusHybridService:
        # This might even be larger than the hybrids own PV Power, if loading from AC grid is enabled
        # and a second inverter is present. In that case, the hybrid is providing negative PV Power.
        if (p_pv >= 5 and p_bat <= 0):
-         self._dbusservice['/Ac/Power'] = p_pv - p_bat
-         self._dbusservice['/Ac/L1/Power'] = (p_pv - p_bat)/3
-         self._dbusservice['/Ac/L2/Power'] = (p_pv - p_bat)/3
-         self._dbusservice['/Ac/L3/Power'] = (p_pv - p_bat)/3
+         self._dbusservice['/Ac/Power'] = p_pv + p_bat
+         self._dbusservice['/Ac/L1/Power'] = (p_pv + p_bat)/3
+         self._dbusservice['/Ac/L2/Power'] = (p_pv + p_bat)/3
+         self._dbusservice['/Ac/L3/Power'] = (p_pv + p_bat)/3
 
          self._dbusservice2['/State'] = 1
          self._dbusservice2['/RunningByConditionCode'] = 1
