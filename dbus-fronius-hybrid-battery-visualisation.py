@@ -131,9 +131,36 @@ class DbusFroniusHybridService:
         raise ValueError("AccessType %s is not supported" % (config['DEFAULT']['AccessType']))
     
     return URL
+  
+  def _getFroniusPVDataUrl(self):
+    config = self._getConfig()
+    accessType = config['DEFAULT']['AccessType']
+    
+    if accessType == 'OnPremise': 
+        URL = "http://%s/solar_api/v1/GetInverterRealtimeData.cgi?Scope=Device&DataCollection=CommonInverterData&DeviceId=%s" % (config['ONPREMISE']['Host'], config['ONPREMISE']['HybridID'])
+    else:
+        raise ValueError("AccessType %s is not supported" % (config['DEFAULT']['AccessType']))
+    
+    return URL
  
   def _getFroniusBatteryData(self):
     URL = self._getFroniusBatteryDataUrl()
+    meter_r = requests.get(url = URL)
+    
+    # check for response
+    if not meter_r:
+        raise ConnectionError("No response from Fronius - %s" % (URL))
+    
+    meter_data = meter_r.json()     
+    
+    # check for Json
+    if not meter_data:
+        raise ValueError("Converting response to JSON failed on Fronius")
+    
+    return meter_data
+  
+  def _getFroniusPVData(self):
+    URL = self._getFroniusPVDataUrl()
     meter_r = requests.get(url = URL)
     
     # check for response
@@ -159,28 +186,47 @@ class DbusFroniusHybridService:
     try:
        #get data from Fronius
        bat_data = self._getFroniusBatteryData()
+       pv_data = self._getFroniusPVData()
 
        #gather data
        p_bat = bat_data['Body']['Data']["Site"]["P_Akku"]
        p_load = bat_data['Body']['Data']["Site"]["P_Load"]
-       p_pv = bat_data['Body']['Data']["Site"]["P_PV"]
+       p_pv_grid = bat_data['Body']['Data']["Site"]["P_PV"]
+       u_pv = pv_data['Body']['Data']['UAC']['Value']
+       i_pv = pv_data['Body']['Data']['IAC']['Value']
+       p_pv = pv_data['Body']['Data']['PAC']['Value']
+       f_pv = pv_data['Body']['Data']['FAC']['Value']
+       p_pv_total = pv_data['Body']['Data']['TOTAL_ENERGY']['Value'] / 1000.0
 
        #Act as regular inverter on DBUS for Solar-Production ob dbusservice.
        #Act as AC-Generator on dbusservice2
-       
+       self._dbusservice['/Ac/Energy/Forward'] = p_pv_total
+       self._dbusservice['/Ac/L1/Voltage'] = u_pv
+       self._dbusservice['/Ac/L2/Voltage'] = u_pv
+       self._dbusservice['/Ac/L3/Voltage'] = u_pv
+       self._dbusservice2['/Ac/L1/Voltage'] = u_pv
+       self._dbusservice2['/Ac/L2/Voltage'] = u_pv
+       self._dbusservice2['/Ac/L3/Voltage'] = u_pv
+
        #battery is discharging, no PV available.
-       if (p_pv < 5):
+       if (p_pv_grid < 5):
          self._dbusservice['/Ac/Power'] = 0 #no PV Power.
          self._dbusservice['/Ac/L1/Power'] = 0 #no PV Power.
          self._dbusservice['/Ac/L2/Power'] = 0 #no PV Power.
          self._dbusservice['/Ac/L3/Power'] = 0 #no PV Power.
+         self._dbusservice['/Ac/L1/Current'] = 0 #no PV Power.
+         self._dbusservice['/Ac/L2/Current'] = 0 #no PV Power.
+         self._dbusservice['/Ac/L3/Current'] = 0 #no PV Power.
 
          self._dbusservice2['/State'] = 1
          self._dbusservice2['/RunningByConditionCode'] = 1
-         self._dbusservice2['/Ac/Power'] =  (p_load * -1) #Pretend our generator is running. Use P_Load *-1 as this equals the AC load.
-         self._dbusservice2['/Ac/L1/Power'] = (p_load * -1)/3 #Pretend our generator is running.
-         self._dbusservice2['/Ac/L2/Power'] = (p_load * -1)/3 #Pretend our generator is running.
-         self._dbusservice2['/Ac/L3/Power'] = (p_load * -1)/3 #Pretend our generator is running.
+         self._dbusservice2['/Ac/Power'] =  p_pv #Pretend our generator is running.
+         self._dbusservice2['/Ac/L1/Power'] = (p_pv)/3 #Pretend our generator is running.
+         self._dbusservice2['/Ac/L2/Power'] = (p_pv)/3 #Pretend our generator is running.
+         self._dbusservice2['/Ac/L3/Power'] = (p_pv)/3 #Pretend our generator is running.
+         self._dbusservice2['/Ac/L1/Current'] = (p_pv/u_pv)/3 #Pretend our generator is running.
+         self._dbusservice2['/Ac/L2/Current'] = (p_pv/u_pv)/3 #Pretend our generator is running.
+         self._dbusservice2['/Ac/L3/Current'] = (p_pv/u_pv)/3 #Pretend our generator is running.
 
        # PV is available and battery is charging or full.
        # Reduce the reported PV Output by the amount the battery is sucking in directly. 
@@ -191,6 +237,9 @@ class DbusFroniusHybridService:
          self._dbusservice['/Ac/L1/Power'] = (p_pv + p_bat)/3
          self._dbusservice['/Ac/L2/Power'] = (p_pv + p_bat)/3
          self._dbusservice['/Ac/L3/Power'] = (p_pv + p_bat)/3
+         self._dbusservice['/Ac/L1/Current'] = i_pv/3 
+         self._dbusservice['/Ac/L2/Current'] = i_pv/3 
+         self._dbusservice['/Ac/L3/Current'] = i_pv/3 
 
          self._dbusservice2['/State'] = 1
          self._dbusservice2['/RunningByConditionCode'] = 1
@@ -198,6 +247,9 @@ class DbusFroniusHybridService:
          self._dbusservice2['/Ac/L1/Power'] = p_bat/3
          self._dbusservice2['/Ac/L2/Power'] = p_bat/3
          self._dbusservice2['/Ac/L3/Power'] = p_bat/3
+         self._dbusservice2['/Ac/L1/Current'] = (p_bat/u_pv)/3 
+         self._dbusservice2['/Ac/L2/Current'] = (p_bat/u_pv)/3 
+         self._dbusservice2['/Ac/L3/Current'] = (p_bat/u_pv)/3
 
        # increment UpdateIndex - to show that new data is available
        index = self._dbusservice['/UpdateIndex'] + 1  # increment index
