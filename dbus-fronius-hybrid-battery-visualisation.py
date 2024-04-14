@@ -167,7 +167,9 @@ class DbusFroniusHybridService:
 
        #Act as regular inverter on DBUS for Solar-Production ob dbusservice.
        #Act as AC-Generator on dbusservice2
-       if (p_bat > 0):
+       
+       #battery is discharging, no PV available.
+       if (p_pv < 5):
          self._dbusservice['/Ac/Power'] = 0 #no PV Power.
          self._dbusservice['/Ac/L1/Power'] = 0 #no PV Power.
          self._dbusservice['/Ac/L2/Power'] = 0 #no PV Power.
@@ -179,7 +181,24 @@ class DbusFroniusHybridService:
          self._dbusservice2['/Ac/L1/Power'] = (p_load * -1)/3 #Pretend our generator is running.
          self._dbusservice2['/Ac/L2/Power'] = (p_load * -1)/3 #Pretend our generator is running.
          self._dbusservice2['/Ac/L3/Power'] = (p_load * -1)/3 #Pretend our generator is running.
-       
+
+       # PV is available and battery is charging or full.
+       # Reduce the reported PV Output by the amount the battery is sucking in directly. 
+       # This might even be larger than the hybrids own PV Power, if loading from AC grid is enabled
+       # and a second inverter is present. In that case, the hybrid is providing negative PV Power.
+       if (p_pv >= 5 and p_bat <= 0):
+         self._dbusservice['/Ac/Power'] = p_pv - p_bat
+         self._dbusservice['/Ac/L1/Power'] = (p_pv - p_bat)/3
+         self._dbusservice['/Ac/L2/Power'] = (p_pv - p_bat)/3
+         self._dbusservice['/Ac/L3/Power'] = (p_pv - p_bat)/3
+
+         self._dbusservice2['/State'] = 0
+         self._dbusservice2['/RunningByConditionCode'] = 0
+         self._dbusservice2['/Ac/Power'] = 0
+         self._dbusservice2['/Ac/L1/Power'] = 0
+         self._dbusservice2['/Ac/L2/Power'] = 0
+         self._dbusservice2['/Ac/L3/Power'] = 0
+
        # increment UpdateIndex - to show that new data is available
        index = self._dbusservice['/UpdateIndex'] + 1  # increment index
        index2 = self._dbusservice2['/UpdateIndex'] + 1  # increment index
