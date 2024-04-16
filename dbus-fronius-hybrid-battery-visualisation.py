@@ -238,14 +238,6 @@ class DbusFroniusHybridService:
        self._dbusservicePVInverter['/Ac/L1/Voltage'] = u_pv
        self._dbusservicePVInverter['/Ac/L2/Voltage'] = u_pv
        self._dbusservicePVInverter['/Ac/L3/Voltage'] = u_pv
-
-       self._dbusservicePVInverterBattery['/Dc/0/Power'] = i_bat * u_bat
-       self._dbusservicePVInverterBattery['/Dc/0/Current'] = i_bat
-       self._dbusservicePVInverterBattery['/Dc/0/Voltage'] = u_bat
-       self._dbusservicePVInverterBattery['/Temperature'] = temp
-       self._dbusservicePVInverterBattery['/Soc'] = soc
-
-       #battery is discharging, no PV available.
        self._dbusservicePVInverter['/Ac/Power'] = p_pv
        self._dbusservicePVInverter['/Ac/L1/Power'] = (p_pv)/3
        self._dbusservicePVInverter['/Ac/L2/Power'] = (p_pv)/3
@@ -253,11 +245,12 @@ class DbusFroniusHybridService:
        self._dbusservicePVInverter['/Ac/L1/Current'] = i_pv/3 
        self._dbusservicePVInverter['/Ac/L2/Current'] = i_pv/3 
        self._dbusservicePVInverter['/Ac/L3/Current'] = i_pv/3 
+       self._dbusservicePVInverterBattery['/Dc/0/Power'] = i_bat * u_bat
+       self._dbusservicePVInverterBattery['/Dc/0/Current'] = i_bat
+       self._dbusservicePVInverterBattery['/Dc/0/Voltage'] = u_bat
+       self._dbusservicePVInverterBattery['/Temperature'] = temp
+       self._dbusservicePVInverterBattery['/Soc'] = soc
 
-       self._dbusserviceInverter['/Dc/0/Voltage'] = u_bat
-       self._dbusserviceInverter['/Ac/Out/L1/V'] = u_pv
-       self._dbusserviceInverter['/Ac/Out/L1/I'] = i_pv
-       self._dbusserviceInverter['/Ac/Out/L1/P'] = p_bat
 
        # increment UpdateIndex - to show that new data is available
        index = self._dbusservicePVInverter['/UpdateIndex'] + 1  # increment index
