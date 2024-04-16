@@ -34,65 +34,66 @@ def dbusconnection():
     return SessionBus() if 'DBUS_SESSION_BUS_ADDRESS' in os.environ else SystemBus()
 
 class DbusFroniusHybridService:
-  def __init__(self, servicename, servicename2, paths, paths2, 
-               productname='Fronius Hybrid', connection='Fronius meter JSON API', productname2='Fronius attached Battery', connection2='Fronius meter JSON API'):
+  def __init__(self, 
+               serviceNamePVInverter, serviceNameBattery, 
+               pathsPVInverter, pathsBattery, 
+               productnamePVInverter='Fronius Hybrid', ProducnameBattery='Fronius Hybrid Attached Battery', 
+               connection='Fronius meter JSON API'):
     
     config = configparser.ConfigParser()
     config.read("%s/config.ini" % (os.path.dirname(os.path.realpath(__file__))))
 
-    deviceinstance = int(config['ONPREMISE']['DeviceIdForInverter'])
-    deviceinstance2 = int(config['ONPREMISE']['DeviceIdForGenSet'])
+    deviceinstancePVInterter = int(config['ONPREMISE']['DeviceIdForPVInverter'])
+    deviceinstanceBattery = int(config['ONPREMISE']['DeviceIdForBattery'])
 
-    logging.debug("%s /DeviceInstance = %d" % (servicename, deviceinstance))
-    logging.debug("%s /DeviceInstance = %d" % (servicename2, deviceinstance2))
-
-    self._dbusservice = VeDbusService("{}.http_{:02d}".format(servicename, deviceinstance), bus=dbusconnection())
-    self._dbusservice2 = VeDbusService("{}.http_{:02d}".format(servicename2, deviceinstance2), bus=dbusconnection())
-    self._paths = paths
-    self._paths2 = paths2
- 
+    self._dbusservicePVInverter = VeDbusService("{}.http_{:02d}".format(serviceNamePVInverter, deviceinstancePVInterter), bus=dbusconnection())
+    self._dbusservicePVInverterBattery = VeDbusService("{}.http_{:02d}".format(serviceNameBattery, deviceinstanceBattery), bus=dbusconnection())
+     
     # Create the management objects, as specified in the ccgx dbus-api document
-    self._dbusservice.add_path('/Mgmt/ProcessName', __file__)
-    self._dbusservice.add_path('/Mgmt/ProcessVersion', 'Unkown version, and running on Python ' + platform.python_version())
-    self._dbusservice.add_path('/Mgmt/Connection', connection)
+    self._dbusservicePVInverter.add_path('/Mgmt/ProcessName', __file__)
+    self._dbusservicePVInverter.add_path('/Mgmt/ProcessVersion', 'Unkown version, and running on Python ' + platform.python_version())
+    self._dbusservicePVInverter.add_path('/Mgmt/Connection', connection)
  
     # Create the mandatory objects
-    self._dbusservice.add_path('/DeviceInstance', deviceinstance)
-    self._dbusservice.add_path('/ProductId', 0xa142) # See https://gist.github.com/seidler2547/52f3e91cbcbf2fa257ae79371bb78588, 41282 Fronius solar inverter
-    self._dbusservice.add_path('/ProductName', productname)
-    self._dbusservice.add_path('/CustomName', "Fronius Hybrid")    
-    self._dbusservice.add_path('/Latency', None)    
-    self._dbusservice.add_path('/FirmwareVersion', 0.1)
-    self._dbusservice.add_path('/HardwareVersion', 0)
-    self._dbusservice.add_path('/Connected', 1)
-    self._dbusservice.add_path('/Position', int(config['ONPREMISE']['InverterPosition'])) 
-    self._dbusservice.add_path('/Serial', self._getFronisSerial())
-    self._dbusservice.add_path('/UpdateIndex', 0)
- 
+    self._dbusservicePVInverter.add_path('/DeviceInstance', deviceinstancePVInterter)
+    self._dbusservicePVInverter.add_path('/ProductId', 0xa142) # See https://gist.github.com/seidler2547/52f3e91cbcbf2fa257ae79371bb78588, 41282 Fronius solar inverter
+    self._dbusservicePVInverter.add_path('/ProductName', productnamePVInverter) 
+    self._dbusservicePVInverter.add_path('/Latency', None)    
+    self._dbusservicePVInverter.add_path('/FirmwareVersion', 0.1)
+    self._dbusservicePVInverter.add_path('/HardwareVersion', 0)
+    self._dbusservicePVInverter.add_path('/Connected', 1)
+    self._dbusservicePVInverter.add_path('/Position', int(config['ONPREMISE']['PVInverterPosition'])) 
+    self._dbusservicePVInverter.add_path('/Serial', self._getFronisSerial())
+    self._dbusservicePVInverter.add_path('/UpdateIndex', 0)
+
     # Create the management objects, as specified in the ccgx dbus-api document
-    self._dbusservice2.add_path('/Mgmt/ProcessName', __file__)
-    self._dbusservice2.add_path('/Mgmt/ProcessVersion', 'Unkown version, and running on Python ' + platform.python_version())
-    self._dbusservice2.add_path('/Mgmt/Connection', connection2)
+    self._dbusservicePVInverterBattery.add_path('/Mgmt/ProcessName', __file__)
+    self._dbusservicePVInverterBattery.add_path('/Mgmt/ProcessVersion', 'Unkown version, and running on Python ' + platform.python_version())
+    self._dbusservicePVInverterBattery.add_path('/Mgmt/Connection', connection)
  
     # Create the mandatory objects
-    self._dbusservice2.add_path('/DeviceInstance', deviceinstance2)
-    self._dbusservice2.add_path('/ProductId', 57344) 
-    self._dbusservice2.add_path('/ProductName', productname2)
-    self._dbusservice2.add_path('/CustomName', "Fronius Hybrid attached Battery")    
-    self._dbusservice2.add_path('/Latency', None)    
-    self._dbusservice2.add_path('/FirmwareVersion', 0.1)
-    self._dbusservice2.add_path('/HardwareVersion', 0)
-    self._dbusservice2.add_path('/Connected', 1)
-    self._dbusservice2.add_path('/Serial', self._getFronisSerial())
-    self._dbusservice2.add_path('/UpdateIndex', 0)
+    bat_detail_data = self._getFroniusBatteryDetailData()
+    vendor = bat_detail_data['Body']['Data']["Controller"]["Details"]["Manufacturer"]
+    model = bat_detail_data['Body']['Data']["Controller"]["Details"]["Model"]
+    size = bat_detail_data['Body']['Data']["Controller"]["DesignedCapacity"]
+    
+    self._dbusservicePVInverterBattery.add_path('/ProductName', "[" + vendor  +"] " +  model + " " + str(round(size/1000, 1)))
+    self._dbusservicePVInverterBattery.add_path('/DeviceInstance', deviceinstanceBattery)
+    self._dbusservicePVInverterBattery.add_path('/ProductId', 57344) 
+    self._dbusservicePVInverterBattery.add_path('/Latency', None)    
+    self._dbusservicePVInverterBattery.add_path('/FirmwareVersion', 0.1)
+    self._dbusservicePVInverterBattery.add_path('/HardwareVersion', 0)
+    self._dbusservicePVInverterBattery.add_path('/Connected', 1)
+    self._dbusservicePVInverterBattery.add_path('/Serial', self._getFronisSerial())
+    self._dbusservicePVInverterBattery.add_path('/UpdateIndex', 0)
 
     # add path values to dbus
-    for path, settings in self._paths.items():
-      self._dbusservice.add_path(
+    for path, settings in pathsPVInverter.items():
+      self._dbusservicePVInverter.add_path(
         path, settings['initial'], gettextcallback=settings['textformat'], writeable=True, onchangecallback=self._handlechangedvalue)
- 
-    for path, settings in self._paths2.items():
-      self._dbusservice2.add_path(
+
+    for path, settings in pathsBattery.items():
+      self._dbusservicePVInverterBattery.add_path(
         path, settings['initial'], gettextcallback=settings['textformat'], writeable=True, onchangecallback=self._handlechangedvalue)
 
     # last update
@@ -132,6 +133,17 @@ class DbusFroniusHybridService:
     
     return URL
   
+  def _getFroniusBatteryDetailDataUrl(self):
+    config = self._getConfig()
+    accessType = config['DEFAULT']['AccessType']
+    
+    if accessType == 'OnPremise': 
+        URL = "http://%s/solar_api/v1/GetStorageRealtimeData.cgi?Scope=Device&DeviceId=0" % (config['ONPREMISE']['Host'])
+    else:
+        raise ValueError("AccessType %s is not supported" % (config['DEFAULT']['AccessType']))
+    
+    return URL
+  
   def _getFroniusPVDataUrl(self):
     config = self._getConfig()
     accessType = config['DEFAULT']['AccessType']
@@ -145,6 +157,22 @@ class DbusFroniusHybridService:
  
   def _getFroniusBatteryData(self):
     URL = self._getFroniusBatteryDataUrl()
+    meter_r = requests.get(url = URL)
+    
+    # check for response
+    if not meter_r:
+        raise ConnectionError("No response from Fronius - %s" % (URL))
+    
+    meter_data = meter_r.json()     
+    
+    # check for Json
+    if not meter_data:
+        raise ValueError("Converting response to JSON failed on Fronius")
+    
+    return meter_data
+  
+  def _getFroniusBatteryDetailData(self):
+    URL = self._getFroniusBatteryDetailDataUrl()
     meter_r = requests.get(url = URL)
     
     # check for response
@@ -178,7 +206,6 @@ class DbusFroniusHybridService:
   def _signOfLife(self):
     logging.info("--- Start: sign of life ---")
     logging.info("Last _update() call: %s" % (self._lastUpdate))
-    logging.info("Last '/Ac/Power': %s" % (self._dbusservice['/Ac/Power']))
     logging.info("--- End: sign of life ---")
     return True
  
@@ -186,12 +213,19 @@ class DbusFroniusHybridService:
     try:
        #get data from Fronius
        bat_data = self._getFroniusBatteryData()
+       bat_detail_data = self._getFroniusBatteryDetailData()
        pv_data = self._getFroniusPVData()
 
        #gather data
+       soc = bat_detail_data['Body']['Data']["Controller"]["StateOfCharge_Relative"]
+       temp = bat_detail_data['Body']['Data']["Controller"]["Temperature_Cell"]
+       u_bat = bat_detail_data['Body']['Data']["Controller"]["Voltage_DC"]
+       i_bat = bat_detail_data['Body']['Data']["Controller"]["Current_DC"]
+
        p_bat = bat_data['Body']['Data']["Site"]["P_Akku"]
        p_load = bat_data['Body']['Data']["Site"]["P_Load"]
        p_pv_grid = bat_data['Body']['Data']["Site"]["P_PV"]
+
        u_pv = pv_data['Body']['Data']['UAC']['Value']
        i_pv = pv_data['Body']['Data']['IAC']['Value']
        p_pv = pv_data['Body']['Data']['PAC']['Value']
@@ -200,60 +234,34 @@ class DbusFroniusHybridService:
 
        #Act as regular inverter on DBUS for Solar-Production ob dbusservice.
        #Act as AC-Generator on dbusservice2
-       self._dbusservice['/Ac/Energy/Forward'] = p_pv_total
-       self._dbusservice['/Ac/L1/Voltage'] = u_pv
-       self._dbusservice['/Ac/L2/Voltage'] = u_pv
-       self._dbusservice['/Ac/L3/Voltage'] = u_pv
-       self._dbusservice2['/Ac/L1/Voltage'] = u_pv
-       self._dbusservice2['/Ac/L2/Voltage'] = u_pv
-       self._dbusservice2['/Ac/L3/Voltage'] = u_pv
+       self._dbusservicePVInverter['/Ac/Energy/Forward'] = p_pv_total
+       self._dbusservicePVInverter['/Ac/L1/Voltage'] = u_pv
+       self._dbusservicePVInverter['/Ac/L2/Voltage'] = u_pv
+       self._dbusservicePVInverter['/Ac/L3/Voltage'] = u_pv
+
+       self._dbusservicePVInverterBattery['/Dc/0/Power'] = i_bat * u_bat
+       self._dbusservicePVInverterBattery['/Dc/0/Current'] = i_bat
+       self._dbusservicePVInverterBattery['/Dc/0/Voltage'] = u_bat
+       self._dbusservicePVInverterBattery['/Temperature'] = temp
+       self._dbusservicePVInverterBattery['/Soc'] = soc
 
        #battery is discharging, no PV available.
-       if (p_pv_grid < 5):
-         self._dbusservice['/Ac/Power'] = 0 #no PV Power.
-         self._dbusservice['/Ac/L1/Power'] = 0 #no PV Power.
-         self._dbusservice['/Ac/L2/Power'] = 0 #no PV Power.
-         self._dbusservice['/Ac/L3/Power'] = 0 #no PV Power.
-         self._dbusservice['/Ac/L1/Current'] = 0 #no PV Power.
-         self._dbusservice['/Ac/L2/Current'] = 0 #no PV Power.
-         self._dbusservice['/Ac/L3/Current'] = 0 #no PV Power.
+       self._dbusservicePVInverter['/Ac/Power'] = p_pv
+       self._dbusservicePVInverter['/Ac/L1/Power'] = (p_pv)/3
+       self._dbusservicePVInverter['/Ac/L2/Power'] = (p_pv)/3
+       self._dbusservicePVInverter['/Ac/L3/Power'] = (p_pv)/3
+       self._dbusservicePVInverter['/Ac/L1/Current'] = i_pv/3 
+       self._dbusservicePVInverter['/Ac/L2/Current'] = i_pv/3 
+       self._dbusservicePVInverter['/Ac/L3/Current'] = i_pv/3 
 
-         self._dbusservice2['/State'] = 1
-         self._dbusservice2['/RunningByConditionCode'] = 1
-         self._dbusservice2['/Ac/Power'] =  p_pv #Pretend our generator is running.
-         self._dbusservice2['/Ac/L1/Power'] = (p_pv)/3 #Pretend our generator is running.
-         self._dbusservice2['/Ac/L2/Power'] = (p_pv)/3 #Pretend our generator is running.
-         self._dbusservice2['/Ac/L3/Power'] = (p_pv)/3 #Pretend our generator is running.
-         self._dbusservice2['/Ac/L1/Current'] = (p_pv/u_pv)/3 #Pretend our generator is running.
-         self._dbusservice2['/Ac/L2/Current'] = (p_pv/u_pv)/3 #Pretend our generator is running.
-         self._dbusservice2['/Ac/L3/Current'] = (p_pv/u_pv)/3 #Pretend our generator is running.
-
-       # PV is available and battery is charging or full.
-       # Reduce the reported PV Output by the amount the battery is sucking in directly. 
-       # This might even be larger than the hybrids own PV Power, if loading from AC grid is enabled
-       # and a second inverter is present. In that case, the hybrid is providing negative PV Power.
-       if (p_pv >= 5 and p_bat <= 0):
-         self._dbusservice['/Ac/Power'] = p_pv + p_bat
-         self._dbusservice['/Ac/L1/Power'] = (p_pv + p_bat)/3
-         self._dbusservice['/Ac/L2/Power'] = (p_pv + p_bat)/3
-         self._dbusservice['/Ac/L3/Power'] = (p_pv + p_bat)/3
-         self._dbusservice['/Ac/L1/Current'] = i_pv/3 
-         self._dbusservice['/Ac/L2/Current'] = i_pv/3 
-         self._dbusservice['/Ac/L3/Current'] = i_pv/3 
-
-         self._dbusservice2['/State'] = 1
-         self._dbusservice2['/RunningByConditionCode'] = 1
-         self._dbusservice2['/Ac/Power'] = p_bat
-         self._dbusservice2['/Ac/L1/Power'] = p_bat/3
-         self._dbusservice2['/Ac/L2/Power'] = p_bat/3
-         self._dbusservice2['/Ac/L3/Power'] = p_bat/3
-         self._dbusservice2['/Ac/L1/Current'] = (p_bat/u_pv)/3 
-         self._dbusservice2['/Ac/L2/Current'] = (p_bat/u_pv)/3 
-         self._dbusservice2['/Ac/L3/Current'] = (p_bat/u_pv)/3
+       self._dbusserviceInverter['/Dc/0/Voltage'] = u_bat
+       self._dbusserviceInverter['/Ac/Out/L1/V'] = u_pv
+       self._dbusserviceInverter['/Ac/Out/L1/I'] = i_pv
+       self._dbusserviceInverter['/Ac/Out/L1/P'] = p_bat
 
        # increment UpdateIndex - to show that new data is available
-       index = self._dbusservice['/UpdateIndex'] + 1  # increment index
-       index2 = self._dbusservice2['/UpdateIndex'] + 1  # increment index
+       index = self._dbusservicePVInverter['/UpdateIndex'] + 1  # increment index
+       index2 = self._dbusservicePVInverterBattery['/UpdateIndex'] + 1  # increment index
        
        if index > 255:   # maximum value of the index
          index = 0       # overflow from 255 to 0
@@ -261,8 +269,8 @@ class DbusFroniusHybridService:
        if index2 > 255:   # maximum value of the index
          index2 = 0       # overflow from 255 to 0
        
-       self._dbusservice['/UpdateIndex'] = index
-       self._dbusservice2['/UpdateIndex'] = index2
+       self._dbusservicePVInverter['/UpdateIndex'] = index
+       self._dbusservicePVInverterBattery['/UpdateIndex'] = index2
 
        #update lastupdate vars
        self._lastUpdate = time.time()              
@@ -299,15 +307,18 @@ def main():
       _w = lambda p, v: (str(round(v, 1)) + ' W')
       _v = lambda p, v: (str(round(v, 1)) + ' V')   
       _p = lambda p, v: (str(v))
+      _t = lambda p, v: (str(round(v, 1)) + ' °C')   
 
-      serviceNameInverter = "com.victronenergy.pvinverter"
-      serviceNameGenerator = "com.victronenergy.genset"
-      
+
+      #3rd Service, Inverter is experimental. 
+      serviceNamePVInverter = "com.victronenergy.pvinverter"
+      serviceNameBattery = "com.victronenergy.battery"
+
       #start our services
       pvac_output = DbusFroniusHybridService(
-        servicename=serviceNameInverter,
-        servicename2=serviceNameGenerator,
-        paths={
+        serviceNamePVInverter=serviceNamePVInverter,
+        serviceNameBattery=serviceNameBattery,
+        pathsPVInverter={
           '/Ac/Energy/Forward': {'initial': None, 'textformat': _kwh}, # energy produced by pv inverter
           '/Ac/Power': {'initial': 0, 'textformat': _w},
           '/Ac/L1/Voltage': {'initial': 0, 'textformat': _v},
@@ -323,44 +334,12 @@ def main():
           '/Ac/L2/Energy/Forward': {'initial': None, 'textformat': _kwh},
           '/Ac/L3/Energy/Forward': {'initial': None, 'textformat': _kwh}
         },
-        paths2={
-          '/Ac/Power': {'initial': 0, 'textformat': _w},              #<- W    - total of all phases, real power
-
-          '/Ac/L1/Current':{'initial': 0, 'textformat': _a},         #<- A AC
-          '/Ac/L1/Power': {'initial': 0, 'textformat': _w},           #<- W, real power
-          '/Ac/L1/Voltage': {'initial': 0, 'textformat': _v},         #<- V AC
-          
-          '/Ac/L2/Current':{'initial': 0, 'textformat': _a},         #<- A AC
-          '/Ac/L2/Power': {'initial': 0, 'textformat': _w},           #<- W, real power
-          '/Ac/L2/Voltage': {'initial': 0, 'textformat': _v},         #<- V AC
-
-          '/Ac/L3/Current':{'initial': 0, 'textformat': _a},         #<- A AC
-          '/Ac/L3/Power': {'initial': 0, 'textformat': _w},           #<- W, real power
-          '/Ac/L3/Voltage': {'initial': 0, 'textformat': _v},         #<- V AC
-          '/Ac/ActiveIn/Connected': {'initial': 1, 'textformat': _p},
-          '/RunningByConditionCode': {'initial': 4, 'textformat': _p},
-          '/Error': {'initial': 0, 'textformat': _p},
-          '/State': {'initial': 0, 'textformat': _p},
-          '/Ac/In/0/Connected':{'initial': 1, 'textformat': _p},
-          '/Ac/In/0/ServiceTyp':{'initial': 'genset', 'textformat': _p},
-          '/RunningByCondition': {'initial': 'soc', 'textformat': _p},
-          '/Runtime': {'initial': 0, 'textformat': _p},
-          '/TodayRuntime': {'initial': 0, 'textformat': _p},
-          '/TestRunIntervalRuntime': {'initial': 0, 'textformat': _p},
-          '/NextTestRun': {'initial': None, 'textformat': _p},
-          '/SkipTestRun': {'initial': None, 'textformat': _p},
-          '/ManualStart': {'initial': 0, 'textformat': _p},
-          '/ManualStartTimer': {'initial': 0, 'textformat': _p},
-          '/QuietHours': {'initial': 0, 'textformat': _p},
-          '/Alarms/NoGeneratorAtAcIn': {'initial': 0, 'textformat': _p},
-          '/Alarms/ServiceIntervalExceeded': {'initial': 0, 'textformat': _p},
-          '/Alarms/AutoStartDisabled': {'initial': 0, 'textformat': _p},
-          '/AutoStartEnabled': {'initial': 0, 'textformat': _p},
-          '/AccumulatedRuntime': {'initial': 0, 'textformat': _p},
-          '/ServiceInterval': {'initial': 0, 'textformat': _p},
-          '/ServiceCounter': {'initial': 0, 'textformat': _p},
-          '/ServiceCounterReset': {'initial': 0, 'textformat': _p},
-          '/NrOfPhases': {'initial': 3, 'textformat': _p},
+        pathsBattery={
+          '/Dc/0/Voltage': {'initial': 0, 'textformat': _v},
+          '/Dc/0/Current': {'initial': 0, 'textformat': _a},
+          '/Dc/0/Power': {'initial': 0, 'textformat': _w},
+          '/Soc': {'initial': 0, 'textformat': _p},
+          '/Temperature': {'initial': 0, 'textformat': _t},
         })
      
       logging.info('Connected to dbus, and switching over to gobject.MainLoop() (= event based)')
