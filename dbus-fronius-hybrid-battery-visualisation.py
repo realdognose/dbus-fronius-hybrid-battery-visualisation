@@ -22,6 +22,10 @@ import dbus
 sys.path.insert(1, os.path.join(os.path.dirname(__file__), '/opt/victronenergy/dbus-systemcalc-py/ext/velib_python'))
 from vedbus import VeDbusService
 
+from dbus.mainloop.glib import DBusGMainLoop
+# Have a mainloop, so we can send/receive asynchronous calls to and from dbus
+DBusGMainLoop(set_as_default=True)
+
 class SystemBus(dbus.bus.BusConnection):
     def __new__(cls):
         return dbus.bus.BusConnection.__new__(cls, dbus.bus.BusConnection.TYPE_SYSTEM)
@@ -290,9 +294,7 @@ def main():
                             ])
  
   try:
-      from dbus.mainloop.glib import DBusGMainLoop
-      # Have a mainloop, so we can send/receive asynchronous calls to and from dbus
-      DBusGMainLoop(set_as_default=True)
+      
      
       #formatting 
       _kwh = lambda p, v: (str(round(v, 2)) + ' kWh')
