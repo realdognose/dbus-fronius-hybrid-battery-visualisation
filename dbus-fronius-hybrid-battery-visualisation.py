@@ -216,7 +216,7 @@ class DbusFroniusHybridService:
   def _update(self):   
     try:
        #get data from Fronius
-       bat_data = self._getFroniusBatteryData()
+       #bat_data = self._getFroniusBatteryData()
        bat_detail_data = self._getFroniusBatteryDetailData()
        pv_data = self._getFroniusPVData()
 
@@ -226,9 +226,9 @@ class DbusFroniusHybridService:
        u_bat = bat_detail_data['Body']['Data']["Controller"]["Voltage_DC"]
        i_bat = bat_detail_data['Body']['Data']["Controller"]["Current_DC"]
 
-       p_bat = bat_data['Body']['Data']["Site"]["P_Akku"]
-       p_load = bat_data['Body']['Data']["Site"]["P_Load"]
-       p_pv_grid = bat_data['Body']['Data']["Site"]["P_PV"]
+       #p_bat = bat_data['Body']['Data']["Site"]["P_Akku"]
+       #p_load = bat_data['Body']['Data']["Site"]["P_Load"]
+       #p_pv_grid = bat_data['Body']['Data']["Site"]["P_PV"]
 
        u_pv = pv_data['Body']['Data']['UAC']['Value']
        i_pv = pv_data['Body']['Data']['IAC']['Value']
