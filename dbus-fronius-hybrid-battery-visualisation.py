@@ -56,7 +56,7 @@ class DbusFroniusHybridService:
  
     # Create the mandatory objects
     self._dbusservicePVInverter.add_path('/DeviceInstance', deviceinstancePVInterter)
-    self._dbusservicePVInverter.add_path('/ProductId', 0xa142) # See https://gist.github.com/seidler2547/52f3e91cbcbf2fa257ae79371bb78588, 41282 Fronius solar inverter
+    self._dbusservicePVInverter.add_path('/ProductId', int(config['ONPREMISE']['PVInverterProductId'])) # See https://gist.github.com/seidler2547/52f3e91cbcbf2fa257ae79371bb78588, 41282 Fronius solar inverter
     self._dbusservicePVInverter.add_path('/ProductName', productnamePVInverter) 
     self._dbusservicePVInverter.add_path('/Latency', None)    
     self._dbusservicePVInverter.add_path('/FirmwareVersion', 0.1)
@@ -79,7 +79,7 @@ class DbusFroniusHybridService:
     
     self._dbusservicePVInverterBattery.add_path('/ProductName', "[" + vendor  +"] " +  model + " " + str(round(size/1000, 1)))
     self._dbusservicePVInverterBattery.add_path('/DeviceInstance', deviceinstanceBattery)
-    self._dbusservicePVInverterBattery.add_path('/ProductId', 57344) 
+    self._dbusservicePVInverterBattery.add_path('/ProductId', int(config['ONPREMISE']['BatteryProductId'])) 
     self._dbusservicePVInverterBattery.add_path('/Latency', None)    
     self._dbusservicePVInverterBattery.add_path('/FirmwareVersion', 0.1)
     self._dbusservicePVInverterBattery.add_path('/HardwareVersion', 0)
