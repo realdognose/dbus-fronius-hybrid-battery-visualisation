@@ -2,7 +2,9 @@
 
 The original Implementation of Victrons Fronius Readout shows all Fronius inverters as PV-Inverters. Unfortunately the attached Battery is not visible.
 
-So, I wrote my Own script, that addresses this issue and creates a dbus-based Battery-Management System based on the JSON-API of the fronius inverter. 
+So, I wrote my own script, that addresses this issue and creates a dbus-based Battery-Management System based on the JSON-API of the fronius inverter. 
+
+Disable the internal scanning for PV-Inverters and remove the original entry created by victron, else they appear twice. 
 
 (There is currently PV Output of the second inverter as well, so the battery discharge & the PV Output don't match, but they do)
 ![image](https://github.com/realdognose/dbus-fronius-hybrid-battery-visualisation/blob/main/img/BatteryAdd.png)
